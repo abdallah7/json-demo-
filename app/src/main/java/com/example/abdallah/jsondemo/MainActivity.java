@@ -6,6 +6,10 @@ import android.support.v7.app.AppCompatActivity;
 import android.widget.Button;
 import android.widget.TextView;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,7 +30,8 @@ public class MainActivity extends AppCompatActivity {
 
         Button btnHit = (Button)findViewById(R.id.btnHit);
         tvDate = (TextView)findViewById(R.id.tvJsonItem);
-        new JSONTask().execute("http://www.w3schools.com/appml/appml.php?model=model_cd_from_json");
+
+        new JSONTask().execute("http://jsonparsing.parseapp.com/jsonData/moviesDemoItem.txt");
 
     }
 
@@ -55,14 +60,26 @@ public class MainActivity extends AppCompatActivity {
             while ((line = reader.readLine()) != null ) {
                 buffer.append(line);
             }
+            // Take a copy from buffer
+            String finalJeson = buffer.toString();
+            // take the json opject
+            JSONObject parntOpject = new JSONObject(finalJeson);
+            //take the array with name movies from the json opject
+            JSONArray parentArray = parntOpject.getJSONArray("movies");
+            //take the opject from the array
+            JSONObject finalopject = parentArray.getJSONObject(0);
+            String moviename = finalopject.getString("movie");
+            Integer year = finalopject.getInt("year");
 
-            return buffer.toString();
+            return moviename + "->" + year;
 
         }catch (MalformedURLException e){
             e.printStackTrace();
         }catch (IOException e) {
             e.printStackTrace();
-        }finally {
+        } catch (JSONException e) {
+            e.printStackTrace();
+        } finally {
             if (connection !=null){
                 connection.disconnect();}
             try{

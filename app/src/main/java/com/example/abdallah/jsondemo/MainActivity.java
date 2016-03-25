@@ -31,7 +31,8 @@ public class MainActivity extends AppCompatActivity {
         Button btnHit = (Button)findViewById(R.id.btnHit);
         tvDate = (TextView)findViewById(R.id.tvJsonItem);
 
-        new JSONTask().execute("http://jsonparsing.parseapp.com/jsonData/moviesDemoItem.txt");
+//        new JSONTask().execute("http://jsonparsing.parseapp.com/jsonData/moviesDemoItem.txt");
+        new JSONTask().execute("http://jsonparsing.parseapp.com/jsonData/moviesDemoList.txt ");
 
     }
 
@@ -66,12 +67,16 @@ public class MainActivity extends AppCompatActivity {
             JSONObject parntOpject = new JSONObject(finalJeson);
             //take the array with name movies from the json opject
             JSONArray parentArray = parntOpject.getJSONArray("movies");
-            //take the opject from the array
-            JSONObject finalopject = parentArray.getJSONObject(0);
-            String moviename = finalopject.getString("movie");
-            Integer year = finalopject.getInt("year");
-
-            return moviename + "->" + year;
+            //stor all data in it
+            StringBuffer finalbuffereddata = new StringBuffer();
+            for (int i=0 ; i<parentArray.length() ; i++ ) {
+                //take the opject from the array
+                JSONObject finalopject = parentArray.getJSONObject(i);
+                String moviename = finalopject.getString("movie");
+                Integer year = finalopject.getInt("year");
+                finalbuffereddata.append(moviename + " -> " + year + "\n");
+            }
+            return finalbuffereddata.toString();
 
         }catch (MalformedURLException e){
             e.printStackTrace();

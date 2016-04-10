@@ -7,9 +7,11 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.example.abdallah.jsondemo.models.MovieModel;
@@ -31,10 +33,11 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener{
 
 
     private ListView lvMovies;
+    Spinner spinner ;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,14 +53,31 @@ public class MainActivity extends AppCompatActivity {
         .build();
         ImageLoader.getInstance().init(config); // Do it on Application start
 
+        spinner = (Spinner)findViewById(R.id.cuntry);
+
+        ArrayAdapter adapter = ArrayAdapter.createFromResource(this,R.array.countries,android.R.layout.simple_spinner_dropdown_item);
+
+        spinner.setAdapter(adapter);
+
         lvMovies = (ListView)findViewById(R.id.lvMovies);
-//        new JSONTask().execute("http://jsonparsing.parseapp.com/jsonData/moviesDemoItem.txt");
-        new JSONTask().execute("http://jsonparsing.parseapp.com/jsonData/moviesData.txt");
+        //localhost maybe chang any time  must run on the same network
+        spinner.setOnItemSelectedListener(this);
+
+    }
+
+    @Override
+    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        TextView cuontry = (TextView) view ;
+        new JSONTask().execute("http://192.168.1.4/JSON/"+cuontry.getText()+".php");
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> parent) {
 
     }
 
 
-//to make code work in background and connect
+    //to make code work in background and connect
   public class JSONTask extends AsyncTask<String, String, List<MovieModel>> {
 
 
@@ -86,7 +106,7 @@ public class MainActivity extends AppCompatActivity {
             // take the json opject
             JSONObject parntOpject = new JSONObject(finalJeson);
             //take the array with name movies from the json opject
-            JSONArray parentArray = parntOpject.getJSONArray("movies");
+            JSONArray parentArray = parntOpject.getJSONArray("reports");
             //stor all data in it
             //StringBuffer finalbuffereddata = new StringBuffer();
 
@@ -176,7 +196,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
             ImageView ivMovieIcon ;
-            TextView tvMovie ;
+            TextView Title ;
 //            TextView tvTagline ;
 //            TextView tvYear ;
 //            TextView tvDuration ;
@@ -186,7 +206,7 @@ public class MainActivity extends AppCompatActivity {
 //            TextView tvStory ;
 
             ivMovieIcon = (ImageView)convertView.findViewById(R.id.ivIcon);
-            tvMovie = (TextView)convertView.findViewById(R.id.tvMovie);
+            Title = (TextView)convertView.findViewById(R.id.tvMovie);
 //            tvTagline = (TextView)convertView.findViewById(R.id.tvTagline);
 //            tvYear = (TextView)convertView.findViewById(R.id.tvYear);
 //            tvDuration = (TextView)convertView.findViewById(R.id.tvDuration);
@@ -199,7 +219,7 @@ public class MainActivity extends AppCompatActivity {
             ImageLoader.getInstance().displayImage(movieModelList.get(position).getImage() , ivMovieIcon);
             // Default options will be used
 
-            tvMovie.setText(movieModelList.get(position).getMovie());
+            Title.setText(movieModelList.get(position).getMovie());
 //            tvTagline.setText(movieModelList.get(position).getTagline());
 //            tvYear.setText("year: " + movieModelList.get(position).getYear());
 //            tvDuration.setText("Duration: " + movieModelList.get(position).getDuration());

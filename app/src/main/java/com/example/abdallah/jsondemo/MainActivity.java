@@ -1,6 +1,7 @@
 package com.example.abdallah.jsondemo;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -35,15 +36,17 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener{
 
-
-    private ListView lvMovies;
+    public String selected ;
+    private ListView repoteslist;
     Spinner spinner ;
+// to send id for list items
+    public final static String ID_EXTRA = "com.example.abdallah.jsondemo._ID";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+// to display image
        // Create default options which will be used for every
 //  displayImage(...) call if no options will be passed to this method
         DisplayImageOptions defaultOptions = new DisplayImageOptions.Builder().cacheInMemory(true).cacheOnDisk(true)
@@ -52,23 +55,38 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         .defaultDisplayImageOptions(defaultOptions)
         .build();
         ImageLoader.getInstance().init(config); // Do it on Application start
-
+//cuontry drop down list
         spinner = (Spinner)findViewById(R.id.cuntry);
-
+//drop down lest
         ArrayAdapter adapter = ArrayAdapter.createFromResource(this,R.array.countries,android.R.layout.simple_spinner_dropdown_item);
 
         spinner.setAdapter(adapter);
-
-        lvMovies = (ListView)findViewById(R.id.lvMovies);
-        //localhost maybe chang any time  must run on the same network
+//call list
+        repoteslist = (ListView)findViewById(R.id.repoteslist);
+        //call drop down list
         spinner.setOnItemSelectedListener(this);
 
+        repoteslist.setOnItemClickListener(onListclik);
     }
+// action  click on list item
+    private AdapterView.OnItemClickListener onListclik = new AdapterView.OnItemClickListener(){
+// send data to the second activity
+        public void onItemClick(AdapterView<?> parent , View view , int position , long id ){
+            Intent i  = new Intent(MainActivity.this , single_article.class );
 
+            i.putExtra(ID_EXTRA , String.valueOf(id)+"/"+selected);
+            startActivity(i);
+
+        }
+    };
+
+// action on select from drop dowen list
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
         TextView cuontry = (TextView) view ;
-        new JSONTask().execute("http://192.168.1.4/JSON/"+cuontry.getText()+".php");
+        //localhost maybe chang any time  must run on the same network(pute the json files <egypt.php,qatar.php,soudi.php,dubai.php> in folder named JSON change network ip to 192.168.1.103)
+        selected = cuontry.getText().toString();
+        new JSONTask().execute("http://192.168.1.103/JSON/" + selected + ".php");
     }
 
     @Override
@@ -107,8 +125,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             JSONObject parntOpject = new JSONObject(finalJeson);
             //take the array with name movies from the json opject
             JSONArray parentArray = parntOpject.getJSONArray("reports");
-            //stor all data in it
-            //StringBuffer finalbuffereddata = new StringBuffer();
 
             List<MovieModel> movieModelList = new ArrayList<>();
 
@@ -116,30 +132,8 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 //take the opject from the array
                 JSONObject finalopject = parentArray.getJSONObject(i);
                 MovieModel movieModel = new MovieModel();
-                movieModel.setMovie(finalopject.getString("movie"));
-//                movieModel.setYear(finalopject.getInt("year"));
-//                movieModel.setRating((float) finalopject.getDouble("rating"));
-//                movieModel.setDirector(finalopject.getString("director"));
-//                movieModel.setDuration(finalopject.getString("duration"));
-//                movieModel.setTagline(finalopject.getString("tagline"));
+                movieModel.setTitle(finalopject.getString("Title"));
                 movieModel.setImage(finalopject.getString("image"));
-//                movieModel.setStory(finalopject.getString("story"));
-//
-//                List<MovieModel.Cast> castList = new ArrayList<>();
-//                for(int j=0 ; j<finalopject.getJSONArray("cast").length(); j++)
-//                {
-//                    JSONObject castObject = finalopject.getJSONArray("cast").getJSONObject(j);
-//                    MovieModel.Cast cast = new MovieModel.Cast();
-//                    cast.setName(castObject.getString("name"));
-//                    castList.add(cast);
-//                }
-//                movieModel.setCastList(castList);
-
-
-                //test
-                //String moviename = finalopject.getString("movie");
-                //Integer year = finalopject.getInt("year");
-                //finalbuffereddata.append(moviename + " -> " + year + "\n");
 
                 //adding final list
                 movieModelList.add(movieModel);
@@ -169,7 +163,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     protected void onPostExecute(List<MovieModel> result ) {
         super.onPostExecute(result);
         MovieAdapter adapter = new MovieAdapter(getApplicationContext() , R.layout.row , result);
-        lvMovies.setAdapter(adapter);
+        repoteslist.setAdapter(adapter);
     //TODO need to set data to list
     }
 
@@ -195,45 +189,18 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 convertView = inflater.inflate(resource , null);
             }
 
-            ImageView ivMovieIcon ;
+            ImageView image ;
             TextView Title ;
-//            TextView tvTagline ;
-//            TextView tvYear ;
-//            TextView tvDuration ;
-//            TextView tvDirector ;
-//            RatingBar rbMovieRating;
-//            TextView tvCast ;
-//            TextView tvStory ;
 
-            ivMovieIcon = (ImageView)convertView.findViewById(R.id.ivIcon);
-            Title = (TextView)convertView.findViewById(R.id.tvMovie);
-//            tvTagline = (TextView)convertView.findViewById(R.id.tvTagline);
-//            tvYear = (TextView)convertView.findViewById(R.id.tvYear);
-//            tvDuration = (TextView)convertView.findViewById(R.id.tvDuration);
-//            tvDirector = (TextView)convertView.findViewById(R.id.tvDirector);
-//            rbMovieRating = (RatingBar)convertView.findViewById(R.id.rbMovie);
-//            tvCast = (TextView)convertView.findViewById(R.id.tvCast);
-//            tvStory = (TextView)convertView.findViewById(R.id.tvStory);
+            image = (ImageView)convertView.findViewById(R.id.image);
+            Title = (TextView)convertView.findViewById(R.id.reporttitle);
+
 
             // Then later, when you want to display image
-            ImageLoader.getInstance().displayImage(movieModelList.get(position).getImage() , ivMovieIcon);
+            ImageLoader.getInstance().displayImage(movieModelList.get(position).getImage() , image);
             // Default options will be used
 
-            Title.setText(movieModelList.get(position).getMovie());
-//            tvTagline.setText(movieModelList.get(position).getTagline());
-//            tvYear.setText("year: " + movieModelList.get(position).getYear());
-//            tvDuration.setText("Duration: " + movieModelList.get(position).getDuration());
-//            tvDirector.setText("Directory: " + movieModelList.get(position).getDirector());
-//            //Rating bar
-//            rbMovieRating.setRating(movieModelList.get(position).getRating() / 2);
-//
-//            StringBuffer stringBuffer = new StringBuffer();
-//            for (MovieModel.Cast cast : movieModelList.get(position).getCastList()){
-//                stringBuffer.append(cast.getName() + ", ");
-//            }
-//
-//            tvCast.setText(stringBuffer);
-//            tvStory.setText(movieModelList.get(position).getStory());
+            Title.setText(movieModelList.get(position).getTitle());
             return convertView;
         }//getview
     }//move adptor

@@ -2,6 +2,8 @@ package com.example.abdallah.jsondemo;
 
 import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -14,8 +16,9 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import com.example.abdallah.jsondemo.models.MovieModel;
+import com.example.abdallah.jsondemo.models.ReportModel;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
@@ -38,9 +41,9 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     public String selected ;
     private ListView repoteslist;
-    Spinner spinner ;
+    public Spinner spinner ;
 // to send id for list items
-    public final static String ID_EXTRA = "com.example.abdallah.jsondemo._ID";
+//    public final static String ID_EXTRA = "com.example.abdallah.jsondemo._ID";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,7 +60,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         ImageLoader.getInstance().init(config); // Do it on Application start
 //cuontry drop down list
         spinner = (Spinner)findViewById(R.id.cuntry);
-//drop down lest
+//drop down list
         ArrayAdapter adapter = ArrayAdapter.createFromResource(this,R.array.countries,android.R.layout.simple_spinner_dropdown_item);
 
         spinner.setAdapter(adapter);
@@ -66,27 +69,41 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         //call drop down list
         spinner.setOnItemSelectedListener(this);
 
-        repoteslist.setOnItemClickListener(onListclik);
+        repoteslist.setOnItemClickListener(onListclick);
     }
 // action  click on list item
-    private AdapterView.OnItemClickListener onListclik = new AdapterView.OnItemClickListener(){
+    private AdapterView.OnItemClickListener onListclick = new AdapterView.OnItemClickListener(){
 // send data to the second activity
         public void onItemClick(AdapterView<?> parent , View view , int position , long id ){
             Intent i  = new Intent(MainActivity.this , single_article.class );
 
-            i.putExtra(ID_EXTRA , String.valueOf(id)+"/"+selected);
+            i.putExtra("id" , String.valueOf(id));
+            i.putExtra("country" , selected);
             startActivity(i);
 
         }
     };
 
 // action on select from drop dowen list
+    //the frist in the app
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
         TextView cuontry = (TextView) view ;
         //localhost maybe chang any time  must run on the same network(pute the json files <egypt.php,qatar.php,soudi.php,dubai.php> in folder named JSON change network ip to 192.168.1.103)
         selected = cuontry.getText().toString();
-        new JSONTask().execute("http://192.168.1.103/JSON/" + selected + ".php");
+
+        ConnectivityManager cm =
+                (ConnectivityManager)getSystemService(this.CONNECTIVITY_SERVICE);
+
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        boolean isConnected = activeNetwork != null &&
+                activeNetwork.isConnectedOrConnecting();
+
+        if(isConnected) {
+            new JSONTask().execute("http://192.168.1.124/JSON/" + selected + ".php");
+        }else {
+            Toast.makeText(MainActivity.this, "sorry internet not working", Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override
@@ -96,11 +113,11 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
 
     //to make code work in background and connect
-  public class JSONTask extends AsyncTask<String, String, List<MovieModel>> {
+  public class JSONTask extends AsyncTask<String, String, List<ReportModel>> {
 
 
     @Override
-    protected List<MovieModel> doInBackground(String... params) {
+    protected List<ReportModel> doInBackground(String... params) {
         HttpURLConnection connection = null;
         BufferedReader reader = null;
         try {
@@ -122,23 +139,23 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             // Take a copy from buffer
             String finalJeson = buffer.toString();
             // take the json opject
-            JSONObject parntOpject = new JSONObject(finalJeson);
+            JSONObject parntObject = new JSONObject(finalJeson);
             //take the array with name movies from the json opject
-            JSONArray parentArray = parntOpject.getJSONArray("reports");
+            JSONArray parentArray = parntObject.getJSONArray("reports");
 
-            List<MovieModel> movieModelList = new ArrayList<>();
+            List<ReportModel> reportModelList = new ArrayList<>();
 
             for (int i=0 ; i<parentArray.length() ; i++ ) {
                 //take the opject from the array
                 JSONObject finalopject = parentArray.getJSONObject(i);
-                MovieModel movieModel = new MovieModel();
-                movieModel.setTitle(finalopject.getString("Title"));
-                movieModel.setImage(finalopject.getString("image"));
+                ReportModel reportModel = new ReportModel();
+                reportModel.setTitle(finalopject.getString("Title"));
+                reportModel.setImage(finalopject.getString("image"));
 
                 //adding final list
-                movieModelList.add(movieModel);
+                reportModelList.add(reportModel);
             }
-            return movieModelList;
+            return reportModelList;
 
         }catch (MalformedURLException e){
             e.printStackTrace();
@@ -160,23 +177,23 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     }
 
     @Override
-    protected void onPostExecute(List<MovieModel> result ) {
+    protected void onPostExecute(List<ReportModel> result ) {
         super.onPostExecute(result);
-        MovieAdapter adapter = new MovieAdapter(getApplicationContext() , R.layout.row , result);
+        ReportAdapter adapter = new ReportAdapter(getApplicationContext() , R.layout.row , result);
         repoteslist.setAdapter(adapter);
     //TODO need to set data to list
     }
 
     }
 
-    public class MovieAdapter extends ArrayAdapter{
+    public class ReportAdapter extends ArrayAdapter{
 
-        private List<MovieModel> movieModelList ;
+        private List<ReportModel> reportModelList ;
         private int resource;
         private LayoutInflater inflater ;
-        public MovieAdapter(Context context, int resource, List<MovieModel> objects) {
+        public ReportAdapter(Context context, int resource, List<ReportModel> objects) {
             super(context, resource, objects);
-            movieModelList = objects ;
+            reportModelList = objects ;
             this.resource = resource ;
             inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
 
@@ -197,11 +214,11 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
 
             // Then later, when you want to display image
-            ImageLoader.getInstance().displayImage(movieModelList.get(position).getImage() , image);
+            ImageLoader.getInstance().displayImage(reportModelList.get(position).getImage() , image);
             // Default options will be used
 
-            Title.setText(movieModelList.get(position).getTitle());
+            Title.setText(reportModelList.get(position).getTitle());
             return convertView;
         }//getview
-    }//move adptor
+    }//ReportAdapter
 }//main activity
